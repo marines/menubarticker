@@ -1,0 +1,4 @@
+ - Install [BitBar](https://github.com/matryer/bitbar/releases/latest).
+ - Clone this repo.
+ - Make a symlink to `index.js` in `~/Documents/bitbar` (default for BitBar) and name it `menubarticker.1s.js` (notice `1s` - it's running interval).
+ - You're all set.
