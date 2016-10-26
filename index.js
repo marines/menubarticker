@@ -1,30 +1,12 @@
 #!/usr/bin/env /usr/local/bin/node
-
-/*
-state: {
-    messagesQueue: {
-        'github/commit#a8cd3f': {       // unique id
-            time: '21-10-2016 16:35',   // original message time
-            text: 'Nowy commit w repo',
-            expirationTime: 5,          // time the message is to be shown for
-            seenFor: 2,                 // time the message already have been shown for
-        },
-        'ztm/tramwaj#8': {
-            time: '21-10-2016 16:35',
-            text: 'Nowy commit w repo',
-            expirationTime: 4,
-            seenFor: 2,
-        },
-    }
-}
-
-*/
 var Promise = require('bluebird');
 var request = require('request-promise');
 var moment = require('moment');
 var colors = require('colors');
 var fs = require('fs');
 var path = require('path');
+var bitbar = require('bitbar');
+var _ = require('lodash');
 
 process.chdir(__dirname);
 
@@ -68,17 +50,11 @@ function run(state) {
         displayQueue(state);
         state.locked = false;
         saveState(state);
-    })
-    .finally(() => {
-        console.log('Mariusz Kujawski 2016');
     });
 }
 
 function displayQueue(state) {
-    Object.keys(state.messagesQueue).forEach(id => {
-        console.log(`➡️ ${state.messagesQueue[id].text}`);
-        console.log(`[${id}]`);
-    });
+    bitbar(_.map(state.messagesQueue, msg => msg.bitbar));
 }
 
 function sourceFactory(sourceBlueprint) {
@@ -93,12 +69,16 @@ function sourceFactory(sourceBlueprint) {
     return new source();
 }
 
-function createMessage(text, expirationTime) {
+function createMessage(text, expirationTime, color) {
     return {
         time: moment().format('DD-MM-YYYY HH:mm:ss'),
-        text,
         expirationTime,
         seenFor: 0,
+        bitbar: {
+            text,
+            color: color ? color : 'black',
+            dropdown: false,
+        },
     };
 }
 
@@ -106,12 +86,14 @@ function ztm(source, state, tramwaj, przystanek) {
     function printEta(mins) {
         var id = `${source.name}/tramwaj#${przystanek}&${tramwaj}`;
         var message = `Tramwaj ${tramwaj} odjeżdża za ${mins} minut!`;
+        var color = mins > 4 ? 'black' : 'red';
 
         if (state.messagesQueue[id]) {
             state.messagesQueue[id].seenFor++;
-            state.messagesQueue[id].text = message;
+            state.messagesQueue[id].bitbar.text = message;
+            state.messagesQueue[id].bitbar.color = color;
         } else {
-            state.messagesQueue[id] = createMessage(message, source.expirationTime);
+            state.messagesQueue[id] = createMessage(message, source.expirationTime, color);
         }
     }
 
