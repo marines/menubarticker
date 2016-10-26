@@ -35,7 +35,7 @@ var sources = [
     sourceFactory({
         name: 'ztm',
         interval: 20,
-        expirationTime: 60,
+        expirationTime: 30,
         condition: () => true || parseInt(moment().format('HH')) > '15' && parseInt(moment().format('HH')) < '19',
         feed: (source, state) => ztm(source, state, '8', '2061'),
     }),
@@ -118,6 +118,14 @@ function ztm(source, state, tramwaj, przystanek) {
 }
 
 function saveState(state) {
+    state.messagesQueue = _.reduce(state.messagesQueue, (messages, current, key) => {
+        if (current.seenFor <= current.expirationTime) {
+            messages[key] = current;
+        }
+
+        return messages;
+    }, {});
+
     // console.log(JSON.stringify(state, null, 2));
     fs.writeFile('./state.json', JSON.stringify(state), "utf8");
     return state;
